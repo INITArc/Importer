@@ -1,0 +1,33 @@
+name: Repository import
+run-name: Repository import ${{ inputs.import_id }}
+on:
+  workflow_dispatch:
+    inputs:
+      import_id:
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
+    concurrency:
+      group: arc-import-${{ inputs.import_id }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
+        with:
+          bun-version: '1.4.4'
+      - name: Import repository
+        env:
+          IMPORT_ID: ${{ inputs.import_id }}
+          IMPORT_API_URL: ${{ vars.IMPORT_API_URL }}
+        run: bun infra/arc-importer/import.ts
