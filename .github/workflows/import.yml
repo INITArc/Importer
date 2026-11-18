@@ -1,11 +1,18 @@
 name: Repository import
-run-name: Repository import ${{ inputs.import_id }}
+run-name: Repository import ${{ inputs.import_id }} (${{ inputs.environment }})
 on:
   workflow_dispatch:
     inputs:
       import_id:
         required: true
         type: string
+      environment:
+        required: true
+        type: choice
+        options:
+          - dev
+          - staging
+          - production
 permissions:
   contents: read
 jobs:
@@ -29,5 +36,5 @@ jobs:
       - name: Import repository
         env:
           IMPORT_ID: ${{ inputs.import_id }}
-          IMPORT_API_URL: ${{ vars.IMPORT_API_URL }}
+          IMPORT_API_URL: ${{ inputs.environment == 'production' && 'https://api.init.plus' || inputs.environment == 'staging' && 'https://staging-api.init.plus' || inputs.environment == 'dev' && 'https://dev-api.init.plus' || '' }}
         run: bun infra/arc-importer/import.ts
